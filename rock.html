@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RPS Elite</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: sans-serif; user-select: none; -webkit-user-select: none; }
+        
+        /* Court Backgrounds */
+        .bg-green { background-color: #15803d; }
+        .bg-purple { background-color: #7e22ce; }
+        .bg-red { background-color: #b91c1c; }
+        .bg-yellow { background-color: #ca8a04; }
+        .bg-dark-blue { background-color: #1e3a8a; }
+        .bg-dark-grey { background-color: #334155; }
+        .bg-black { background-color: #000000; }
+
+        /* Custom Styles */
+        .hidden-view { display: none !important; }
+        
+        .neon-title {
+            color: #fff;
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 20px #e11d48, 0 0 40px #e11d48, 0 0 80px #e11d48;
+            font-family: 'Courier New', Courier, monospace;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+
+        .bracket-scroll {
+            overflow: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Animations */
+        @keyframes battleP1 {
+            0% { transform: translateX(-40vw); }
+            15% { transform: translateX(-15vw); }
+            25% { transform: translateX(-15vw) translateY(-40px); }
+            35% { transform: translateX(-15vw) translateY(20px); }
+            45% { transform: translateX(-15vw) translateY(-40px); }
+            55% { transform: translateX(-15vw) translateY(20px); }
+            65% { transform: translateX(-15vw) translateY(-40px); }
+            75% { transform: translateX(-15vw) translateY(20px); }
+            85% { transform: translateX(-15vw) translateY(0); }
+            100% { transform: translateX(-15vw); }
+        }
+        @keyframes battleP2 {
+            0% { transform: translateX(40vw) scaleX(-1); }
+            15% { transform: translateX(15vw) scaleX(-1); }
+            25% { transform: translateX(15vw) scaleX(-1) translateY(-40px); }
+            35% { transform: translateX(15vw) scaleX(-1) translateY(20px); }
+            45% { transform: translateX(15vw) scaleX(-1) translateY(-40px); }
+            55% { transform: translateX(15vw) scaleX(-1) translateY(20px); }
+            65% { transform: translateX(15vw) scaleX(-1) translateY(-40px); }
+            75% { transform: translateX(15vw) scaleX(-1) translateY(20px); }
+            85% { transform: translateX(15vw) scaleX(-1) translateY(0); }
+            100% { transform: translateX(15vw) scaleX(-1); }
+        }
+        @keyframes confettiBlast {
+            0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+            50% { transform: translate(var(--tx), var(--ty)) rotate(calc(var(--rot) / 2)); opacity: 1; }
+            100% { transform: translate(calc(var(--tx) * 1.5), calc(var(--ty) + 150px)) rotate(var(--rot)); opacity: 0; }
+        }
+        .animate-p1 { animation: battleP1 2s forwards; }
+        .animate-p2 { animation: battleP2 2s forwards; }
+    </style>
+</head>
+<body>
+
+    <!-- ================= BOOT SCREEN (Init Audio) ================= -->
+    <div id="boot-view" class="h-screen w-screen flex items-center justify-center bg-black cursor-pointer" onclick="bootApp()">
+        <h1 class="text-3xl font-bold text-white animate-pulse tracking-widest">TAP TO START</h1>
+    </div>
+
+    <!-- ================= HOME VIEW ================= -->
+    <div id="home-view" class="hidden-view h-screen w-screen flex flex-col items-center justify-center bg-slate-900 relative">
+        <div class="absolute top-4 right-4 flex gap-4">
+            <button onclick="toggleMute()" class="bg-slate-800 p-3 rounded-full border border-slate-600 text-xl" id="home-mute-btn">🔊</button>
+            <button onclick="goToAdmin()" class="bg-slate-800 p-3 rounded-full border border-slate-600 text-xl">⚙️</button>
+            <button id="home-bracket-btn" onclick="goToBracket()" class="hidden bg-yellow-600 p-3 rounded-full border border-yellow-400 text-xl shadow-[0_0_15px_rgba(202,138,4,0.5)]">🏆 View Bracket</button>
+        </div>
+
+        <h1 class="text-6xl md:text-8xl font-black mb-12 neon-title">RPS ELITE</h1>
+        
+        <div class="flex flex-col gap-6 w-full max-w-sm px-4">
+            <button onclick="startSingleBattle()" class="w-full bg-gradient-to-r from-blue-600 to-blue-400 text-white font-bold text-2xl py-4 rounded-full border-2 border-white/50 shadow-lg transition-transform active:scale-95 hover:scale-105">
+                ⚔️ Single Battle
+            </button>
+            <button onclick="goToTourneySetup()" class="w-full bg-gradient-to-r from-orange-600 to-red-500 text-white font-bold text-2xl py-4 rounded-full border-2 border-white/50 shadow-lg transition-transform active:scale-95 hover:scale-105">
+                🏆 Local Tournament
+            </button>
+        </div>
+        <p class="absolute bottom-4 text-slate-500 font-mono text-xs text-center w-full">by Matthew Whitemore - V1.00.202604062045</p>
+    </div>
+
+    <!-- ================= ADMIN VIEW ================= -->
+    <div id="admin-view" class="hidden-view min-h-screen flex items-center justify-center p-4 bg-slate-900">
+        <div class="bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-slate-700 max-h-screen overflow-y-auto">
+            <div class="bg-slate-700 p-4 flex justify-between items-center border-b border-slate-600 sticky top-0 z-10">
+                <h1 class="text-xl font-bold flex items-center gap-2">⚙️ Settings</h1>
+                <button onclick="goHome()" class="bg-slate-600 px-4 py-1 rounded font-bold text-sm">Close</button>
+            </div>
+            
+            <div class="p-6 grid md:grid-cols-2 gap-6">
+                <!-- P1 Settings -->
+                <div class="space-y-3">
+                    <h2 class="text-lg font-bold text-blue-400 border-b border-slate-700 pb-1">Default P1 (Single Battle)</h2>
+                    <div>
+                        <input type="text" id="p1-name-input" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white" maxlength="12">
+                    </div>
+                    <div class="flex bg-slate-900 rounded p-1 border border-slate-600">
+                        <button id="p1-type-human" class="flex-1 py-1 rounded flex items-center justify-center transition-colors text-sm" onclick="setPlayerType(1, 'Human')">👤 Human</button>
+                        <button id="p1-type-cpu" class="flex-1 py-1 rounded flex items-center justify-center transition-colors text-sm" onclick="setPlayerType(1, 'CPU')">🤖 CPU</button>
+                    </div>
+                </div>
+
+                <!-- P2 Settings -->
+                <div class="space-y-3">
+                    <h2 class="text-lg font-bold text-red-400 border-b border-slate-700 pb-1">Default P2 (Single Battle)</h2>
+                    <div>
+                        <input type="text" id="p2-name-input" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white" maxlength="12">
+                    </div>
+                    <div class="flex bg-slate-900 rounded p-1 border border-slate-600">
+                        <button id="p2-type-human" class="flex-1 py-1 rounded flex items-center justify-center transition-colors text-sm" onclick="setPlayerType(2, 'Human')">👤 Human</button>
+                        <button id="p2-type-cpu" class="flex-1 py-1 rounded flex items-center justify-center transition-colors text-sm" onclick="setPlayerType(2, 'CPU')">🤖 CPU</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Match Rules & Court Color -->
+            <div class="px-6 pb-6 space-y-6">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-300 border-b border-slate-700 pb-1 mb-3">Match Length</h2>
+                    <div class="flex gap-2">
+                        <button id="bestof-1" onclick="setBestOf(1)" class="flex-1 bg-slate-700 py-2 rounded border border-slate-600 font-bold text-sm transition-colors">Best of 1</button>
+                        <button id="bestof-3" onclick="setBestOf(3)" class="flex-1 bg-slate-700 py-2 rounded border border-slate-600 font-bold text-sm transition-colors">Best of 3</button>
+                        <button id="bestof-5" onclick="setBestOf(5)" class="flex-1 bg-slate-700 py-2 rounded border border-slate-600 font-bold text-sm transition-colors">Best of 5</button>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-lg font-bold text-slate-300 border-b border-slate-700 pb-1 mb-3">Court Color</h2>
+                    <div class="flex flex-wrap gap-3" id="color-picker"></div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-slate-800 border-t border-slate-700 flex justify-center">
+                <button onclick="saveAdminSettings()" class="bg-green-600 hover:bg-green-500 text-white px-8 py-3 rounded-full font-bold shadow-lg transition-transform active:scale-95">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= TOURNAMENT SETUP VIEW ================= -->
+    <div id="tourney-setup-view" class="hidden-view min-h-screen flex flex-col items-center p-4 bg-slate-900">
+        <h2 class="text-3xl md:text-5xl font-bold mb-4 neon-title text-center mt-4">Tournament Setup</h2>
+        <p class="text-slate-400 mb-4 text-center text-sm md:text-base">Add up to 16 players. Missing slots will automatically be filled by CPU opponents to complete the bracket.</p>
+        
+        <div class="bg-slate-800 p-4 rounded-xl w-full max-w-2xl flex-1 max-h-[50vh] overflow-y-auto border border-slate-700" id="tourney-player-list">
+            <!-- Player rows injected via JS -->
+        </div>
+        
+        <div class="mt-6 flex flex-wrap justify-center gap-4 w-full max-w-2xl">
+            <button onclick="addTourneyPlayer()" class="bg-blue-600 px-6 py-3 rounded-full font-bold shadow-lg flex-1 min-w-[150px]">➕ Add Player</button>
+            <button onclick="generateBracket()" class="bg-green-600 px-6 py-3 rounded-full font-bold shadow-lg flex-1 min-w-[200px]">🏆 Generate Bracket</button>
+        </div>
+        <button onclick="goHome()" class="mt-6 text-slate-400 underline font-bold">Back to Home</button>
+    </div>
+
+    <!-- ================= BRACKET VIEW ================= -->
+    <div id="bracket-view" class="hidden-view h-screen flex flex-col bg-slate-900">
+        <div class="bg-slate-800 p-4 flex justify-between items-center border-b border-slate-700">
+            <h1 class="text-2xl md:text-3xl font-black text-white drop-shadow-md">🏆 Tournament Bracket</h1>
+            <div class="flex gap-2">
+                <button id="bracket-back-game-btn" onclick="goToGame(true)" class="hidden bg-green-600 px-4 py-2 rounded font-bold text-sm">🔙 Back to Game</button>
+                <button onclick="goHome()" class="bg-slate-600 px-4 py-2 rounded font-bold text-sm">🏠 Home</button>
+            </div>
+        </div>
+
+        <div class="flex-1 p-4 bracket-scroll flex justify-start items-stretch gap-12" id="bracket-columns">
+            <!-- Bracket columns injected via JS -->
+        </div>
+
+        <div class="p-6 bg-slate-800 border-t border-slate-700 flex justify-center sticky bottom-0">
+            <button id="bracket-action-btn" onclick="playTournamentMatch()" class="bg-gradient-to-r from-orange-500 to-red-600 text-white px-8 py-4 rounded-full font-black text-xl shadow-[0_0_20px_rgba(239,68,68,0.5)] transition-transform active:scale-95">
+                ▶ Play Next Match
+            </button>
+        </div>
+    </div>
+
+
+    <!-- ================= GAME VIEW ================= -->
+    <div id="game-view" class="hidden-view h-screen w-screen relative bg-green text-white">
+        <!-- Court Markings -->
+        <div class="absolute inset-0 pointer-events-none z-0">
+            <div class="absolute inset-4 sm:inset-6 border-4 border-white/60 rounded-xl"></div>
+            <div class="absolute left-1/2 top-0 bottom-0 w-1 bg-white/60 -translate-x-1/2"></div>
+            <div class="absolute left-1/2 top-1/2 w-32 h-32 md:w-48 md:h-48 border-4 border-white/60 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+            <div class="absolute left-1/2 top-1/2 w-4 h-4 bg-white/60 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+        </div>
+
+        <!-- Confetti Container -->
+        <div id="confetti-container" class="absolute inset-0 pointer-events-none z-40 overflow-hidden"></div>
+
+        <!-- Top HUD -->
+        <div class="absolute top-0 w-full z-20 flex justify-between items-start px-6 pt-6 pointer-events-none">
+            <!-- P1 Stats -->
+            <div class="flex flex-col items-start gap-1">
+                <div class="bg-black/60 px-4 py-2 rounded-lg border border-white/20 backdrop-blur-sm pointer-events-auto">
+                    <div id="hud-p1-name" class="font-bold text-lg md:text-xl text-blue-300">P1</div>
+                    <div class="text-white font-mono text-sm tracking-widest flex items-center gap-1">
+                        SCORE: <span id="hud-p1-score" class="text-yellow-400 text-lg">0</span>/<span id="hud-p1-target">3</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Utilities -->
+            <div class="flex flex-col items-center pointer-events-auto">
+                <div class="flex gap-2">
+                    <button id="game-bracket-btn" onclick="goToBracket(true)" class="hidden bg-black/50 hover:bg-black/80 p-3 rounded-full backdrop-blur-md transition-all border border-yellow-400 text-xl shadow-[0_0_10px_rgba(250,204,21,0.4)]">🏆</button>
+                    <button onclick="goHome()" class="bg-black/50 hover:bg-black/80 p-3 rounded-full backdrop-blur-md transition-all border border-white/20 text-xl">🏠</button>
+                </div>
+                <div id="hud-best-of" class="mt-2 text-white/70 text-xs font-bold uppercase tracking-widest bg-black/40 px-3 py-1 rounded-full border border-white/10 backdrop-blur-sm">Best of 5</div>
+            </div>
+
+            <!-- P2 Stats -->
+            <div class="flex flex-col items-end gap-1">
+                <div class="bg-black/60 px-4 py-2 rounded-lg border border-white/20 backdrop-blur-sm pointer-events-auto text-right">
+                    <div id="hud-p2-name" class="font-bold text-lg md:text-xl text-red-300">P2</div>
+                    <div class="text-white font-mono text-sm tracking-widest flex items-center gap-1 justify-end">
+                        SCORE: <span id="hud-p2-score" class="text-yellow-400 text-lg">0</span>/<span id="hud-p2-target">3</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Play Area -->
+        <div class="relative w-full h-full flex z-10">
+            <!-- P1 Zone -->
+            <div class="flex-1 flex flex-col justify-end items-center pb-16 md:pb-24 px-4 relative" id="p1-zone">
+                <div id="p1-ready-msg" class="hidden text-3xl font-bold text-blue-300 bg-black/60 px-6 py-3 rounded-xl border border-blue-500/50 backdrop-blur-md shadow-lg animate-pulse mb-8">READY ✓</div>
+                <div id="p1-cpu-msg" class="hidden text-xl font-bold text-slate-300 mb-8 animate-bounce">CPU Thinking...</div>
+                <div id="p1-choices" class="flex gap-4 mb-8">
+                    <button onclick="handleChoice(1, '✊')" class="bg-slate-800/90 hover:bg-blue-900 border-4 border-slate-600 rounded-full w-20 h-20 md:w-24 md:h-24 text-4xl shadow-xl transition-all active:scale-90 flex items-center justify-center backdrop-blur-sm">✊</button>
+                    <button onclick="handleChoice(1, '✋')" class="bg-slate-800/90 hover:bg-blue-900 border-4 border-slate-600 rounded-full w-20 h-20 md:w-24 md:h-24 text-4xl shadow-xl transition-all active:scale-90 flex items-center justify-center backdrop-blur-sm">✋</button>
+                    <button onclick="handleChoice(1, '✌️')" class="bg-slate-800/90 hover:bg-blue-900 border-4 border-slate-600 rounded-full w-20 h-20 md:w-24 md:h-24 text-4xl shadow-xl transition-all active:scale-90 flex items-center justify-center backdrop-blur-sm">✌️</button>
+                </div>
+            </div>
+
+            <!-- P2 Zone -->
+            <div class="flex-1 flex flex-col justify-end items-center pb-16 md:pb-24 px-4 relative" id="p2-zone">
+                <div id="p2-ready-msg" class="hidden text-3xl font-bold text-red-300 bg-black/60 px-6 py-3 rounded-xl border border-red-500/50 backdrop-blur-md shadow-lg animate-pulse mb-8">READY ✓</div>
+                <div id="p2-cpu-msg" class="hidden text-xl font-bold text-slate-300 mb-8 animate-bounce">CPU Thinking...</div>
+                <div id="p2-choices" class="flex gap-4 mb-8">
+                    <button onclick="handleChoice(2, '✊')" class="bg-slate-800/90 hover:bg-red-900 border-4 border-slate-600 rounded-full w-20 h-20 md:w-24 md:h-24 text-4xl shadow-xl transition-all active:scale-90 flex items-center justify-center backdrop-blur-sm">✊</button>
+                    <button onclick="handleChoice(2, '✋')" class="bg-slate-800/90 hover:bg-red-900 border-4 border-slate-600 rounded-full w-20 h-20 md:w-24 md:h-24 text-4xl shadow-xl transition-all active:scale-90 flex items-center justify-center backdrop-blur-sm">✋</button>
+                    <button onclick="handleChoice(2, '✌️')" class="bg-slate-800/90 hover:bg-red-900 border-4 border-slate-600 rounded-full w-20 h-20 md:w-24 md:h-24 text-4xl shadow-xl transition-all active:scale-90 flex items-center justify-center backdrop-blur-sm">✌️</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Action Overlay -->
+        <div class="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+            
+            <button id="start-battle-btn" onclick="startBattle()" class="hidden pointer-events-auto bg-gradient-to-r from-orange-500 to-red-600 text-white font-black text-3xl md:text-5xl px-12 py-6 rounded-full shadow-[0_0_40px_rgba(239,68,68,0.6)] border-4 border-white transition-transform active:scale-90 hover:scale-105">
+                BATTLE!
+            </button>
+
+            <!-- Battle Hands Container -->
+            <div id="battle-hands" class="hidden absolute inset-0 flex items-center justify-center text-[7rem] md:text-[9rem]">
+                <div id="battle-hand-p1" class="absolute" style="transform: translateX(-15vw);">✊</div>
+                <div id="battle-hand-p2" class="absolute" style="transform: translateX(15vw) scaleX(-1);">✊</div>
+            </div>
+
+            <!-- Result Overlay -->
+            <div id="result-overlay" class="hidden absolute bottom-1/4 pointer-events-auto flex flex-col items-center bg-black/80 p-6 md:p-8 rounded-3xl border border-white/20 backdrop-blur-md shadow-2xl">
+                <h2 id="result-msg" class="text-3xl md:text-4xl font-black mb-6 text-center text-white">Winner!</h2>
+                
+                <button id="next-round-btn" onclick="nextRound()" class="hidden bg-white text-black font-bold text-xl px-8 py-4 rounded-full hover:bg-slate-200 active:scale-95 transition-transform">
+                    Next Round
+                </button>
+
+                <div id="game-over-ui" class="hidden flex-col items-center gap-4">
+                    <button id="play-again-btn" onclick="resetGame()" class="bg-green-500 text-white font-bold text-xl px-8 py-4 rounded-full hover:bg-green-400 active:scale-95 transition-transform flex items-center gap-2 mt-2 shadow-[0_0_20px_rgba(34,197,94,0.4)]">
+                        🏆 Play Again
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // --- Core State ---
+        const winRules = { '✊': '✌️', '✋': '✊', '✌️': '✋' };
+        
+        let settings = { 
+            p1Name: 'Player 1', p1Type: 'Human', 
+            p2Name: 'Player 2', p2Type: 'Human', 
+            courtColor: 'green', isMuted: false,
+            bestOf: 5, mode: 'single' // 'single' or 'tournament'
+        };
+        
+        let game = { p1Score: 0, p2Score: 0, p1Choice: null, p2Choice: null, stage: 'selecting' };
+        let cpuTimers = [];
+
+        // Tournament State
+        let tourney = {
+            active: false,
+            players: [],
+            rounds: [], // Array of rounds. Each round is array of match objects
+            currRound: 0,
+            currMatch: 0
+        };
+
+        let tourneySetupPlayers = [
+            { name: 'P1', type: 'Human' }, { name: 'P2', type: 'Human' },
+            { name: 'P3', type: 'Human' }, { name: 'P4', type: 'Human' }
+        ];
+
+        // --- View Routing ---
+        function hideAllViews() {
+            ['boot-view', 'home-view', 'admin-view', 'tourney-setup-view', 'bracket-view', 'game-view']
+                .forEach(id => document.getElementById(id).classList.add('hidden-view'));
+        }
+
+        function bootApp() {
+            initAudio();
+            loadData();
+            goHome();
+        }
+
+        function goHome() {
+            hideAllViews();
+            document.getElementById('home-view').classList.remove('hidden-view');
+            document.getElementById('home-bracket-btn').classList.toggle('hidden', !tourney.active);
+            startOpeningMusic();
+        }
+
+        function goToAdmin() {
+            hideAllViews();
+            document.getElementById('admin-view').classList.remove('hidden-view');
+            updateAdminUI();
+        }
+
+        function goToTourneySetup() {
+            hideAllViews();
+            document.getElementById('tourney-setup-view').classList.remove('hidden-view');
+            renderTourneySetup();
+        }
+
+        function goToBracket(fromGame = false) {
+            hideAllViews();
+            document.getElementById('bracket-view').classList.remove('hidden-view');
+            
+            const backBtn = document.getElementById('bracket-back-game-btn');
+            if(backBtn) backBtn.classList.toggle('hidden', !fromGame);
+            
+            renderBracket(fromGame);
+        }
+
+        function goToGame(resume = false) {
+            hideAllViews();
+            const gv = document.getElementById('game-view');
+            gv.classList.remove('hidden-view');
+            gv.className = gv.className.replace(/\bbg-\S+/g, '');
+            gv.classList.add(`bg-${settings.courtColor}`);
+            document.getElementById('game-bracket-btn').classList.toggle('hidden', settings.mode !== 'tournament');
+            
+            if (!resume) {
+                resetGame();
+            }
+        }
+
+        // --- Load/Save Data ---
+        function loadData() {
+            const saved = localStorage.getItem('rpsEliteSave');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (parsed.settings) settings = { ...settings, ...parsed.settings };
+                if (parsed.tourney) tourney = parsed.tourney;
+            }
+            document.getElementById('home-mute-btn').innerText = settings.isMuted ? '🔇' : '🔊';
+        }
+
+        function saveData() {
+            localStorage.setItem('rpsEliteSave', JSON.stringify({ settings, tourney }));
+        }
+
+        // --- Audio System ---
+        let audioCtx, osc, gain, pulseInterval, bgMusicInterval;
+        
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playTone(freq, type = 'sine', duration = 0.5, volume = 0.1) {
+            if (settings.isMuted || !audioCtx) return;
+            try {
+                const o = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                o.type = type;
+                o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                o.connect(g);
+                g.connect(audioCtx.destination);
+                g.gain.setValueAtTime(volume, audioCtx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                o.start();
+                o.stop(audioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        function stopAllMusic() {
+            clearInterval(bgMusicInterval);
+        }
+
+        function startOpeningMusic() {
+            stopAllMusic();
+            if (settings.isMuted) return;
+            let step = 0;
+            // Epic 8-bit Arpeggio
+            const notes = [
+                523.25, 659.25, 783.99, 1046.50, 1046.50, 783.99, 659.25, 523.25,
+                587.33, 698.46, 880.00, 1174.66, 1174.66, 880.00, 698.46, 587.33
+            ];
+            bgMusicInterval = setInterval(() => {
+                playTone(notes[step % notes.length], 'square', 0.1, 0.03);
+                step++;
+            }, 120);
+        }
+
+        function startWaitingMusic() {
+            stopAllMusic();
+            if (settings.isMuted) return;
+            let step = 0;
+            const notes = [261.63, 329.63, 392.00, 329.63];
+            bgMusicInterval = setInterval(() => {
+                playTone(notes[step % notes.length], 'sine', 0.4, 0.05);
+                step++;
+            }, 500);
+        }
+
+        function startVictoryMusic() {
+            stopAllMusic();
+            if (settings.isMuted) return;
+            playTone(523.25, 'square', 0.2, 0.1);
+            setTimeout(() => playTone(659.25, 'square', 0.2, 0.1), 150);
+            setTimeout(() => playTone(783.99, 'square', 0.2, 0.1), 300);
+            setTimeout(() => playTone(1046.50, 'square', 0.6, 0.1), 450);
+
+            let step = 0;
+            const notes = [523.25, 659.25, 783.99, 1046.50, 783.99, 1046.50];
+            bgMusicInterval = setInterval(() => {
+                playTone(notes[step % notes.length], 'square', 0.15, 0.05);
+                step++;
+            }, 200);
+        }
+
+        function startHeartbeat() {
+            if (settings.isMuted || !audioCtx) return;
+            try {
+                osc = audioCtx.createOscillator();
+                gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(45, audioCtx.currentTime);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                osc.start();
+
+                let beat = 0;
+                pulseInterval = setInterval(() => {
+                    if (settings.isMuted || !gain) return;
+                    const t = audioCtx.currentTime;
+                    if (beat % 4 === 0) {
+                        gain.gain.setTargetAtTime(0.6, t, 0.05);
+                        gain.gain.setTargetAtTime(0, t + 0.1, 0.1);
+                    } else if (beat % 4 === 1) {
+                        gain.gain.setTargetAtTime(1.0, t, 0.05);
+                        gain.gain.setTargetAtTime(0, t + 0.15, 0.2);
+                    }
+                    beat++;
+                }, 250);
+            } catch(e){}
+        }
+
+        function stopHeartbeat() {
+            clearInterval(pulseInterval);
+            if (gain && audioCtx) gain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+            setTimeout(() => {
+                if (osc) { try{osc.stop();}catch(e){} osc.disconnect(); osc=null; }
+                if (gain) { gain.disconnect(); gain=null; }
+            }, 200);
+        }
+
+        function toggleMute() {
+            settings.isMuted = !settings.isMuted;
+            const icon = settings.isMuted ? '🔇' : '🔊';
+            document.getElementById('home-mute-btn').innerText = icon;
+            saveData();
+            if (settings.isMuted) { stopAllMusic(); stopHeartbeat(); }
+            else { startOpeningMusic(); }
+        }
+
+        // --- Visuals ---
+        function fireConfetti(winnerSide, isGameOver) {
+            const container = document.getElementById('confetti-container');
+            container.innerHTML = '';
+            if (winnerSide === 'tie') return;
+
+            const particleCount = isGameOver ? 150 : 50;
+            const originX = winnerSide === 'p1' ? '25%' : '75%';
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffffff'];
+
+            for (let i = 0; i < particleCount; i++) {
+                const angle = (Math.random() * Math.PI) + Math.PI; 
+                const velocity = (Math.random() * 50) + (isGameOver ? 40 : 20);
+                const tx = Math.cos(angle) * velocity * 10;
+                const ty = Math.sin(angle) * velocity * 10;
+                
+                const p = document.createElement('div');
+                p.className = 'absolute bottom-0 w-3 h-3 md:w-4 md:h-4 rounded-sm shadow-sm';
+                p.style.left = originX;
+                p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                p.style.setProperty('--tx', `${tx}px`);
+                p.style.setProperty('--ty', `${ty}px`);
+                p.style.setProperty('--rot', `${Math.random() * 720}deg`);
+                const duration = (Math.random() * 0.8) + 1.2;
+                p.style.animation = `confettiBlast ${duration}s ease-out forwards ${Math.random() * 0.1}s`;
+                container.appendChild(p);
+            }
+        }
+
+        // --- Admin & Setup Logic ---
+        function updateAdminUI() {
+            document.getElementById('p1-name-input').value = settings.p1Name;
+            document.getElementById('p2-name-input').value = settings.p2Name;
+            
+            document.getElementById('p1-type-human').className = `flex-1 py-1 rounded flex items-center justify-center transition-colors text-sm ${settings.p1Type === 'Human' ? 'bg-blue-600 text-white' : 'text-slate-400'}`;
+            document.getElementById('p1-type-cpu').className = `flex-1 py-1 rounded flex items-center justify-center transition-colors text-sm ${settings.p1Type === 'CPU' ? 'bg-blue-600 text-white' : 'text-slate-400'}`;
+            document.getElementById('p2-type-human').className = `flex-1 py-1 rounded flex items-center justify-center transition-colors text-sm ${settings.p2Type === 'Human' ? 'bg-red-600 text-white' : 'text-slate-400'}`;
+            document.getElementById('p2-type-cpu').className = `flex-1 py-1 rounded flex items-center justify-center transition-colors text-sm ${settings.p2Type === 'CPU' ? 'bg-red-600 text-white' : 'text-slate-400'}`;
+
+            [1, 3, 5].forEach(num => {
+                document.getElementById(`bestof-${num}`).className = `flex-1 py-2 rounded font-bold text-sm transition-colors ${settings.bestOf === num ? 'bg-yellow-600 text-white border-yellow-400' : 'bg-slate-700 text-slate-300 border-slate-600'}`;
+            });
+
+            const colors = [
+                { val: 'green', hex: 'bg-green-700' }, { val: 'purple', hex: 'bg-purple-700' },
+                { val: 'red', hex: 'bg-red-700' }, { val: 'yellow', hex: 'bg-yellow-600' },
+                { val: 'dark-blue', hex: 'bg-blue-900' }, { val: 'dark-grey', hex: 'bg-slate-700' }, { val: 'black', hex: 'bg-black' }
+            ];
+            const picker = document.getElementById('color-picker');
+            picker.innerHTML = '';
+            colors.forEach(c => {
+                const btn = document.createElement('button');
+                btn.className = `w-10 h-10 md:w-12 md:h-12 rounded-full border-4 transition-transform active:scale-90 ${c.hex} ${settings.courtColor === c.val ? 'border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'border-transparent'}`;
+                btn.onclick = () => { settings.courtColor = c.val; updateAdminUI(); };
+                picker.appendChild(btn);
+            });
+        }
+
+        function setPlayerType(p, type) { if (p === 1) settings.p1Type = type; else settings.p2Type = type; updateAdminUI(); }
+        function setBestOf(val) { settings.bestOf = val; updateAdminUI(); }
+        
+        function saveAdminSettings() {
+            settings.p1Name = document.getElementById('p1-name-input').value || 'Player 1';
+            settings.p2Name = document.getElementById('p2-name-input').value || 'Player 2';
+            saveData();
+            goHome();
+        }
+
+        // --- Tournament Logic ---
+        function renderTourneySetup() {
+            const list = document.getElementById('tourney-player-list');
+            list.innerHTML = '';
+            tourneySetupPlayers.forEach((p, idx) => {
+                list.innerHTML += `
+                    <div class="flex items-center gap-2 md:gap-4 mb-3 bg-slate-900 p-2 rounded border border-slate-600">
+                        <span class="font-bold w-4 text-slate-500">${idx+1}.</span>
+                        <input type="text" value="${p.name}" onchange="updateTPlayerName(${idx}, this.value)" class="flex-1 bg-transparent focus:outline-none text-white font-bold" maxlength="12" placeholder="Name">
+                        <button onclick="toggleTPlayerType(${idx})" class="w-16 md:w-20 py-1 rounded text-sm font-bold transition-colors ${p.type==='Human'?'bg-blue-600 text-white':'bg-slate-600 text-slate-300'}">${p.type}</button>
+                        <button onclick="removeTPlayer(${idx})" class="text-red-400 font-bold px-2 hover:bg-red-900/50 rounded">✕</button>
+                    </div>
+                `;
+            });
+        }
+
+        function addTourneyPlayer() {
+            if (tourneySetupPlayers.length >= 16) return alert("Max 16 players!");
+            tourneySetupPlayers.push({ name: `P${tourneySetupPlayers.length+1}`, type: 'Human' });
+            renderTourneySetup();
+        }
+        function updateTPlayerName(idx, val) { tourneySetupPlayers[idx].name = val || `P${idx+1}`; }
+        function toggleTPlayerType(idx) { 
+            tourneySetupPlayers[idx].type = tourneySetupPlayers[idx].type === 'Human' ? 'CPU' : 'Human'; 
+            renderTourneySetup();
+        }
+        function removeTPlayer(idx) {
+            tourneySetupPlayers.splice(idx, 1);
+            renderTourneySetup();
+        }
+
+        function generateBracket() {
+            let players = [...tourneySetupPlayers];
+            if (players.length < 3) return alert("You need at least 3 players to start a tournament!");
+            
+            // Pad to nearest power of 2
+            let target = players.length <= 4 ? 4 : (players.length <= 8 ? 8 : 16);
+            let cpuCount = 1;
+            while(players.length < target) {
+                players.push({ name: `CPU ${cpuCount}`, type: 'CPU' });
+                cpuCount++;
+            }
+
+            // Shuffle
+            players.sort(() => Math.random() - 0.5);
+
+            let rounds = [];
+            let r0 = [];
+            for(let i=0; i<players.length; i+=2) {
+                r0.push({ p1: players[i], p2: players[i+1], winner: null });
+            }
+            rounds.push(r0);
+
+            let nextCount = r0.length / 2;
+            while(nextCount >= 1) {
+                let r = [];
+                for(let i=0; i<nextCount; i++) r.push({ p1: null, p2: null, winner: null });
+                rounds.push(r);
+                nextCount /= 2;
+            }
+
+            tourney = { active: true, players, rounds, currRound: 0, currMatch: 0 };
+            saveData();
+            goToBracket();
+        }
+
+        function renderBracket(fromGame = false) {
+            const container = document.getElementById('bracket-columns');
+            container.innerHTML = '';
+            
+            tourney.rounds.forEach((round, rIdx) => {
+                const col = document.createElement('div');
+                col.className = 'flex flex-col justify-around min-w-[160px] gap-6 px-4 border-r border-slate-600/50 py-4';
+                
+                round.forEach((match, mIdx) => {
+                    const mDiv = document.createElement('div');
+                    const isCurrent = (rIdx === tourney.currRound && mIdx === tourney.currMatch);
+                    mDiv.className = `bg-slate-800 border-2 rounded-lg p-3 text-sm shadow-lg transition-all ${isCurrent ? 'border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.5)] scale-105' : 'border-slate-600'}`;
+
+                    const p1Name = match.p1 ? match.p1.name : 'TBD';
+                    const p2Name = match.p2 ? match.p2.name : 'TBD';
+                    const p1Win = match.winner && match.winner === match.p1;
+                    const p2Win = match.winner && match.winner === match.p2;
+
+                    mDiv.innerHTML = `
+                        <div class="flex justify-between items-center ${p1Win ? 'text-green-400 font-bold' : (match.winner ? 'text-slate-600' : 'text-blue-300')}">
+                            <span class="truncate">${p1Name}</span>
+                            ${p1Win ? '✓' : ''}
+                        </div>
+                        <div class="h-px bg-slate-600 my-2"></div>
+                        <div class="flex justify-between items-center ${p2Win ? 'text-green-400 font-bold' : (match.winner ? 'text-slate-600' : 'text-red-300')}">
+                            <span class="truncate">${p2Name}</span>
+                            ${p2Win ? '✓' : ''}
+                        </div>
+                    `;
+                    col.appendChild(mDiv);
+                });
+                container.appendChild(col);
+            });
+
+            const actionBtn = document.getElementById('bracket-action-btn');
+            if (tourney.currRound >= tourney.rounds.length) {
+                actionBtn.classList.remove('hidden');
+                actionBtn.innerText = "🏆 Tournament Complete! Home";
+                actionBtn.onclick = () => { tourney.active = false; saveData(); goHome(); };
+            } else {
+                if (fromGame) {
+                    actionBtn.classList.add('hidden'); // Hide bottom button if just peeking from active game
+                } else {
+                    actionBtn.classList.remove('hidden');
+                    actionBtn.innerText = "▶ Play Next Match";
+                    actionBtn.onclick = playTournamentMatch;
+                }
+            }
+        }
+
+        function playTournamentMatch() {
+            let match = tourney.rounds[tourney.currRound][tourney.currMatch];
+            settings.mode = 'tournament';
+            settings.p1Name = match.p1.name;
+            settings.p1Type = match.p1.type;
+            settings.p2Name = match.p2.name;
+            settings.p2Type = match.p2.type;
+            goToGame();
+        }
+
+        function advanceTournament(winnerObj) {
+            let match = tourney.rounds[tourney.currRound][tourney.currMatch];
+            match.winner = winnerObj;
+
+            // Push to next round
+            let nextRound = tourney.currRound + 1;
+            if (nextRound < tourney.rounds.length) {
+                let nextMatchIndex = Math.floor(tourney.currMatch / 2);
+                let nextMatch = tourney.rounds[nextRound][nextMatchIndex];
+                let isP1 = tourney.currMatch % 2 === 0;
+                if (isP1) nextMatch.p1 = winnerObj;
+                else nextMatch.p2 = winnerObj;
+            }
+
+            tourney.currMatch++;
+            if (tourney.currMatch >= tourney.rounds[tourney.currRound].length) {
+                tourney.currRound++;
+                tourney.currMatch = 0;
+            }
+            saveData();
+            startOpeningMusic();
+            goToBracket();
+        }
+
+
+        // --- Game Logic ---
+        function startSingleBattle() {
+            settings.mode = 'single';
+            goToGame();
+        }
+
+        function triggerCPU() {
+            cpuTimers.forEach(clearTimeout);
+            cpuTimers = [];
+            const choices = ['✊', '✋', '✌️'];
+            if (settings.p1Type === 'CPU' && !game.p1Choice) {
+                cpuTimers.push(setTimeout(() => handleChoice(1, choices[Math.floor(Math.random() * 3)]), Math.random() * 1500 + 1000));
+            }
+            if (settings.p2Type === 'CPU' && !game.p2Choice) {
+                cpuTimers.push(setTimeout(() => handleChoice(2, choices[Math.floor(Math.random() * 3)]), Math.random() * 1500 + 1000));
+            }
+        }
+
+        function updateGameUI() {
+            const targetWins = Math.floor(settings.bestOf / 2) + 1;
+            document.getElementById('hud-best-of').innerText = settings.bestOf === 1 ? 'Sudden Death' : `Best of ${settings.bestOf}`;
+            document.getElementById('hud-p1-target').innerText = targetWins;
+            document.getElementById('hud-p2-target').innerText = targetWins;
+
+            document.getElementById('hud-p1-name').innerText = settings.p1Name;
+            document.getElementById('hud-p2-name').innerText = settings.p2Name;
+            document.getElementById('hud-p1-score').innerText = game.p1Score;
+            document.getElementById('hud-p2-score').innerText = game.p2Score;
+
+            const p1Ready = document.getElementById('p1-ready-msg');
+            if (game.p1Choice) {
+                document.getElementById('p1-choices').classList.add('hidden'); document.getElementById('p1-cpu-msg').classList.add('hidden');
+                p1Ready.classList.remove('hidden'); p1Ready.innerText = settings.p1Type === 'CPU' ? 'CPU READY' : 'READY ✓';
+            } else {
+                p1Ready.classList.add('hidden');
+                if (settings.p1Type === 'Human') { document.getElementById('p1-choices').classList.remove('hidden'); document.getElementById('p1-cpu-msg').classList.add('hidden'); }
+                else { document.getElementById('p1-choices').classList.add('hidden'); document.getElementById('p1-cpu-msg').classList.remove('hidden'); }
+            }
+
+            const p2Ready = document.getElementById('p2-ready-msg');
+            if (game.p2Choice) {
+                document.getElementById('p2-choices').classList.add('hidden'); document.getElementById('p2-cpu-msg').classList.add('hidden');
+                p2Ready.classList.remove('hidden'); p2Ready.innerText = settings.p2Type === 'CPU' ? 'CPU READY' : 'READY ✓';
+            } else {
+                p2Ready.classList.add('hidden');
+                if (settings.p2Type === 'Human') { document.getElementById('p2-choices').classList.remove('hidden'); document.getElementById('p2-cpu-msg').classList.add('hidden'); }
+                else { document.getElementById('p2-choices').classList.add('hidden'); document.getElementById('p2-cpu-msg').classList.remove('hidden'); }
+            }
+
+            document.getElementById('start-battle-btn').classList.toggle('hidden', !(game.stage === 'selecting' && game.p1Choice && game.p2Choice));
+            
+            const battleHands = document.getElementById('battle-hands');
+            const hand1 = document.getElementById('battle-hand-p1');
+            const hand2 = document.getElementById('battle-hand-p2');
+            
+            if (game.stage === 'selecting') {
+                battleHands.classList.add('hidden');
+            } else {
+                battleHands.classList.remove('hidden');
+                if (game.stage === 'battling') {
+                    hand1.className = 'absolute animate-p1'; hand1.innerText = '✊';
+                    hand2.className = 'absolute animate-p2'; hand2.innerText = '✊';
+                } else {
+                    hand1.className = 'absolute'; hand1.innerText = game.p1Choice;
+                    hand2.className = 'absolute'; hand2.innerText = game.p2Choice;
+                }
+            }
+
+            const resultOverlay = document.getElementById('result-overlay');
+            if (game.stage === 'result' || game.stage === 'gameOver') {
+                resultOverlay.classList.remove('hidden');
+                document.getElementById('next-round-btn').classList.toggle('hidden', game.stage === 'gameOver');
+                document.getElementById('game-over-ui').classList.toggle('hidden', game.stage !== 'gameOver');
+                document.getElementById('result-msg').className = `text-3xl md:text-4xl font-black mb-6 text-center ${game.stage === 'gameOver' ? 'text-yellow-400' : 'text-white'}`;
+            } else {
+                resultOverlay.classList.add('hidden');
+            }
+        }
+
+        function handleChoice(p, choice) {
+            if (p === 1) game.p1Choice = choice; else game.p2Choice = choice;
+            updateGameUI();
+        }
+
+        function startBattle() {
+            stopAllMusic();
+            game.stage = 'battling';
+            updateGameUI();
+            startHeartbeat();
+            setTimeout(() => resolveRound(), 2000);
+        }
+
+        function resolveRound() {
+            stopHeartbeat();
+            let msg = "";
+            let winnerSide = 'tie';
+
+            if (game.p1Choice === game.p2Choice) {
+                msg = "It's a Tie!";
+            } else if (winRules[game.p1Choice] === game.p2Choice) {
+                msg = `${settings.p1Name} Wins Round!`;
+                game.p1Score++; winnerSide = 'p1';
+            } else {
+                msg = `${settings.p2Name} Wins Round!`;
+                game.p2Score++; winnerSide = 'p2';
+            }
+
+            const targetWins = Math.floor(settings.bestOf / 2) + 1;
+
+            if (game.p1Score === targetWins || game.p2Score === targetWins) {
+                const p1Won = game.p1Score === targetWins;
+                startVictoryMusic();
+                game.stage = 'gameOver';
+                document.getElementById('result-msg').innerText = p1Won ? `${settings.p1Name} WINS! 🎉` : `${settings.p2Name} WINS! 🎉`;
+                fireConfetti(p1Won ? 'p1' : 'p2', true);
+
+                const againBtn = document.getElementById('play-again-btn');
+                if (settings.mode === 'tournament') {
+                    const winnerObj = p1Won ? tourney.rounds[tourney.currRound][tourney.currMatch].p1 : tourney.rounds[tourney.currRound][tourney.currMatch].p2;
+                    againBtn.innerText = "🏆 Return to Bracket";
+                    againBtn.onclick = () => advanceTournament(winnerObj);
+                } else {
+                    againBtn.innerText = "⚔️ Play Again";
+                    againBtn.onclick = resetGame;
+                }
+            } else {
+                game.stage = 'result';
+                document.getElementById('result-msg').innerText = msg;
+                fireConfetti(winnerSide, false);
+            }
+            updateGameUI();
+        }
+
+        function nextRound() {
+            game.p1Choice = null; game.p2Choice = null; game.stage = 'selecting';
+            document.getElementById('confetti-container').innerHTML = '';
+            startWaitingMusic();
+            updateGameUI();
+            triggerCPU();
+        }
+
+        function resetGame() {
+            game = { p1Score: 0, p2Score: 0, p1Choice: null, p2Choice: null, stage: 'selecting' };
+            document.getElementById('confetti-container').innerHTML = '';
+            startWaitingMusic();
+            updateGameUI();
+            triggerCPU();
+        }
+    </script>
+</body>
+</html>
