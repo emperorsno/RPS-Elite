@@ -68,33 +68,157 @@
         .animate-p1 { animation: battleP1 2s forwards; }
         .animate-p2 { animation: battleP2 2s forwards; }
     </style>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.9.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
     <!-- ================= BOOT SCREEN (Init Audio) ================= -->
-    <div id="boot-view" class="h-screen w-screen flex items-center justify-center bg-black cursor-pointer" onclick="bootApp()">
-        <h1 class="text-3xl font-bold text-white animate-pulse tracking-widest">TAP TO START</h1>
+    <div id="boot-view" class="h-screen w-screen flex flex-col items-center justify-center bg-black cursor-pointer bg-contain bg-no-repeat bg-center" style="background-image: url('splash.jpg')" onclick="bootApp()">
+        <h1 class="mt-auto mb-16 text-3xl md:text-5xl font-black text-white animate-pulse tracking-widest drop-shadow-[0_5px_5px_rgba(0,0,0,1)] bg-black/50 px-8 py-4 rounded-full border-4 border-white">TAP TO START</h1>
     </div>
 
     <!-- ================= HOME VIEW ================= -->
-    <div id="home-view" class="hidden-view h-screen w-screen flex flex-col items-center justify-center bg-slate-900 relative">
+    <div id="home-view" class="hidden-view min-h-screen w-screen flex flex-col items-center pt-24 pb-8 bg-slate-900 relative overflow-y-auto">
         <div class="absolute top-4 right-4 flex gap-4">
             <button onclick="toggleMute()" class="bg-slate-800 p-3 rounded-full border border-slate-600 text-xl" id="home-mute-btn">🔊</button>
+            <button onclick="openInfoModal()" class="bg-slate-800 p-3 rounded-full border border-slate-600 text-xl">ℹ️</button>
             <button onclick="goToAdmin()" class="bg-slate-800 p-3 rounded-full border border-slate-600 text-xl">⚙️</button>
-            <button id="home-bracket-btn" onclick="goToBracket()" class="hidden bg-yellow-600 p-3 rounded-full border border-yellow-400 text-xl shadow-[0_0_15px_rgba(202,138,4,0.5)]">🏆 View Bracket</button>
         </div>
 
-        <h1 class="text-6xl md:text-8xl font-black mb-12 neon-title">RPS ELITE</h1>
+        <h1 class="text-6xl md:text-8xl font-black mb-12 neon-title mt-8 md:mt-0">RPS ELITE</h1>
         
-        <div class="flex flex-col gap-6 w-full max-w-sm px-4">
-            <button onclick="startSingleBattle()" class="w-full bg-gradient-to-r from-blue-600 to-blue-400 text-white font-bold text-2xl py-4 rounded-full border-2 border-white/50 shadow-lg transition-transform active:scale-95 hover:scale-105">
-                ⚔️ Single Battle
+        <div class="flex flex-col gap-6 w-full max-w-sm px-4 mb-12">
+            <button onclick="openLocalBattleModal()" class="w-full bg-gradient-to-r from-blue-600 to-blue-400 text-white font-bold text-2xl py-4 rounded-full border-2 border-white/50 shadow-lg transition-transform active:scale-95 hover:scale-105">
+                ⚔️ Local Battle
             </button>
             <button onclick="goToTourneySetup()" class="w-full bg-gradient-to-r from-orange-600 to-red-500 text-white font-bold text-2xl py-4 rounded-full border-2 border-white/50 shadow-lg transition-transform active:scale-95 hover:scale-105">
                 🏆 Local Tournament
             </button>
+            <button onclick="goToOnlineLobby()" class="w-full bg-gradient-to-r from-purple-600 to-purple-400 text-white font-bold text-2xl py-4 rounded-full border-2 border-white/50 shadow-lg transition-transform active:scale-95 hover:scale-105">
+                🌐 Online Tournament
+            </button>
+            <button onclick="goToLeaderboard()" class="w-full bg-gradient-to-r from-slate-600 to-slate-500 text-white font-bold text-2xl py-4 rounded-full border-2 border-white/50 shadow-lg transition-transform active:scale-95 hover:scale-105">
+                👑 Global Leaderboard
+            </button>
         </div>
-        <p class="absolute bottom-4 text-slate-500 font-mono text-xs text-center w-full">by Matthew Whitemore - V1.00.202604062045</p>
+        <p class="mt-auto text-slate-500 font-mono text-xs text-center w-full px-4">by Matthew Whitemore - V1.00.202604062045</p>
+    </div>
+
+    <!-- ================= INFO MODAL ================= -->
+    <div id="info-modal" class="hidden-view absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-700 max-h-screen overflow-y-auto">
+            <div class="bg-slate-700 p-4 flex justify-between items-center border-b border-slate-600 sticky top-0">
+                <h1 class="text-xl font-bold flex items-center gap-2">ℹ️ Rules & Info</h1>
+                <button onclick="closeInfoModal()" class="text-slate-400 hover:text-white px-2 font-bold text-xl">✕</button>
+            </div>
+            <div class="p-6 space-y-6 text-slate-300">
+                <div>
+                    <h2 class="font-bold text-white text-lg border-b border-slate-600 pb-2 mb-2">How to Play</h2>
+                    <ul class="list-disc pl-5 space-y-2">
+                        <li>✊ Rock crushes ✌️ Scissors</li>
+                        <li>✌️ Scissors cut ✋ Paper</li>
+                        <li>✋ Paper covers ✊ Rock</li>
+                        <li>Both players must make their choice quickly!</li>
+                    </ul>
+                </div>
+                <div>
+                    <h2 class="font-bold text-white text-lg border-b border-slate-600 pb-2 mb-2">Credits</h2>
+                    <p>Designed and created by <button onclick="toggleEasterEgg()" class="text-blue-400 hover:text-blue-300 font-bold underline">Matthew Whitemore</button>.</p>
+                    <div id="easter-egg-img" class="hidden mt-4 flex justify-center">
+                        <img src="matthew.jpg" alt="Matthew Whitemore" class="rounded-xl border-2 border-blue-500 shadow-lg max-h-48 object-cover">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= LOCAL BATTLE MODAL ================= -->
+    <div id="local-battle-modal" class="hidden-view absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-700">
+            <div class="bg-slate-700 p-4 flex justify-between items-center border-b border-slate-600">
+                <h1 class="text-xl font-bold flex items-center gap-2">⚔️ Local Battle Setup</h1>
+                <button onclick="closeLocalBattleModal()" class="text-slate-400 hover:text-white px-2 font-bold text-xl">✕</button>
+            </div>
+            <div class="p-6 space-y-6">
+                <!-- P1 -->
+                <div class="space-y-2">
+                    <h2 class="font-bold text-blue-400">Player 1 Name</h2>
+                    <input type="text" id="modal-p1-name" value="Player 1" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-white text-lg font-bold" maxlength="12">
+                    <div class="flex bg-slate-900 rounded p-1 border border-slate-600">
+                        <button id="modal-p1-human" class="flex-1 py-2 rounded bg-blue-600 text-white font-bold" onclick="setModalP1('Human')">👤 Human</button>
+                        <button id="modal-p1-cpu" class="flex-1 py-2 rounded text-slate-400 font-bold" onclick="setModalP1('CPU')">🤖 CPU</button>
+                    </div>
+                </div>
+                <!-- P2 -->
+                <div class="space-y-2">
+                    <h2 class="font-bold text-red-400">Player 2 Name</h2>
+                    <input type="text" id="modal-p2-name" value="Player 2" class="w-full bg-slate-900 border border-slate-600 rounded p-3 text-white text-lg font-bold" maxlength="12">
+                    <div class="flex bg-slate-900 rounded p-1 border border-slate-600">
+                        <button id="modal-p2-human" class="flex-1 py-2 rounded bg-red-600 text-white font-bold" onclick="setModalP2('Human')">👤 Human</button>
+                        <button id="modal-p2-cpu" class="flex-1 py-2 rounded text-slate-400 font-bold" onclick="setModalP2('CPU')">🤖 CPU</button>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 bg-slate-700 border-t border-slate-600 flex justify-center">
+                <button onclick="startLocalBattle()" class="w-full bg-gradient-to-r from-green-600 to-green-500 text-white py-3 rounded-xl font-black text-xl shadow-lg transition-transform active:scale-95 hover:scale-105">
+                    START MATCH!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= LEADERBOARD VIEW ================= -->
+    <div id="leaderboard-view" class="hidden-view h-screen w-screen flex flex-col bg-slate-900">
+        <div class="bg-slate-800 p-4 flex justify-between items-center border-b border-slate-700">
+            <h1 class="text-2xl md:text-3xl font-black text-white drop-shadow-md">👑 Global Leaderboard</h1>
+            <button onclick="goHome()" class="bg-slate-600 px-4 py-2 rounded font-bold text-sm hover:bg-slate-500 transition-colors">🏠 Home</button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4 flex justify-center">
+            <div class="w-full max-w-2xl bg-slate-800 rounded-xl border border-slate-700 p-4">
+                <div class="flex text-slate-400 font-bold border-b border-slate-700 pb-2 mb-2 px-2 text-sm md:text-base">
+                    <div class="w-12 text-center">RANK</div>
+                    <div class="flex-1">PLAYER</div>
+                    <div class="w-20 text-right">WINS</div>
+                </div>
+                <div id="leaderboard-list" class="space-y-2">
+                    <div class="text-center text-slate-500 py-8 animate-pulse">Loading Leaderboard...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= ONLINE LOBBY VIEW ================= -->
+    <div id="online-lobby-view" class="hidden-view h-screen w-screen flex flex-col bg-slate-900">
+        <div class="bg-slate-800 p-4 flex justify-between items-center border-b border-slate-700">
+            <h1 class="text-2xl md:text-3xl font-black text-white drop-shadow-md">🌐 Online Match</h1>
+            <button onclick="goHome()" class="bg-slate-600 px-4 py-2 rounded font-bold text-sm hover:bg-slate-500 transition-colors">🏠 Home</button>
+        </div>
+        <div class="flex-1 flex flex-col items-center justify-center p-4">
+            <div class="bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-8 border border-slate-700 text-center space-y-8" id="lobby-setup">
+                <h2 class="text-2xl font-bold text-purple-400">Play with a Friend Online</h2>
+                <div class="space-y-4">
+                    <button onclick="createOnlineRoom()" class="w-full bg-gradient-to-r from-purple-600 to-purple-500 text-white py-4 rounded-xl font-black text-xl shadow-lg transition-transform active:scale-95 hover:scale-105">
+                        Create Room
+                    </button>
+                    <div class="text-slate-500 font-bold">- OR -</div>
+                    <div class="flex gap-2">
+                        <input type="text" id="join-room-code" placeholder="Enter Room Code" class="flex-1 bg-slate-900 border border-slate-600 rounded-xl p-3 text-white text-center font-bold tracking-widest uppercase" maxlength="4">
+                        <button onclick="joinOnlineRoom()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-transform active:scale-95 hover:bg-blue-500">
+                            Join
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="lobby-waiting" class="hidden bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md p-8 border border-slate-700 text-center space-y-6">
+                <h2 class="text-2xl font-bold text-purple-400 animate-pulse">Waiting for Player 2...</h2>
+                <p class="text-slate-300">Share this code with your friend:</p>
+                <div id="lobby-room-code-display" class="text-6xl font-black text-yellow-400 tracking-widest bg-slate-900 py-4 rounded-xl border-2 border-yellow-500/50">XXXX</div>
+                <button onclick="cancelOnlineRoom()" class="text-slate-400 hover:text-white underline text-sm mt-4">Cancel</button>
+            </div>
+        </div>
     </div>
 
     <!-- ================= ADMIN VIEW ================= -->
@@ -105,30 +229,8 @@
                 <button onclick="goHome()" class="bg-slate-600 px-4 py-1 rounded font-bold text-sm">Close</button>
             </div>
             
-            <div class="p-6 grid md:grid-cols-2 gap-6">
-                <!-- P1 Settings -->
-                <div class="space-y-3">
-                    <h2 class="text-lg font-bold text-blue-400 border-b border-slate-700 pb-1">Default P1 (Single Battle)</h2>
-                    <div>
-                        <input type="text" id="p1-name-input" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white" maxlength="12">
-                    </div>
-                    <div class="flex bg-slate-900 rounded p-1 border border-slate-600">
-                        <button id="p1-type-human" class="flex-1 py-1 rounded flex items-center justify-center transition-colors text-sm" onclick="setPlayerType(1, 'Human')">👤 Human</button>
-                        <button id="p1-type-cpu" class="flex-1 py-1 rounded flex items-center justify-center transition-colors text-sm" onclick="setPlayerType(1, 'CPU')">🤖 CPU</button>
-                    </div>
-                </div>
-
-                <!-- P2 Settings -->
-                <div class="space-y-3">
-                    <h2 class="text-lg font-bold text-red-400 border-b border-slate-700 pb-1">Default P2 (Single Battle)</h2>
-                    <div>
-                        <input type="text" id="p2-name-input" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white" maxlength="12">
-                    </div>
-                    <div class="flex bg-slate-900 rounded p-1 border border-slate-600">
-                        <button id="p2-type-human" class="flex-1 py-1 rounded flex items-center justify-center transition-colors text-sm" onclick="setPlayerType(2, 'Human')">👤 Human</button>
-                        <button id="p2-type-cpu" class="flex-1 py-1 rounded flex items-center justify-center transition-colors text-sm" onclick="setPlayerType(2, 'CPU')">🤖 CPU</button>
-                    </div>
-                </div>
+            <div class="p-6">
+                <p class="text-slate-400 mb-6 text-sm">Player defaults for Local Battle are now set before the match starts.</p>
             </div>
 
             <!-- Match Rules & Court Color -->
@@ -167,7 +269,7 @@
         
         <div class="mt-6 flex flex-wrap justify-center gap-4 w-full max-w-2xl">
             <button onclick="addTourneyPlayer()" class="bg-blue-600 px-6 py-3 rounded-full font-bold shadow-lg flex-1 min-w-[150px]">➕ Add Player</button>
-            <button onclick="generateBracket()" class="bg-green-600 px-6 py-3 rounded-full font-bold shadow-lg flex-1 min-w-[200px]">🏆 Generate Bracket</button>
+            <button onclick="generateBracket()" class="bg-green-600 px-6 py-3 rounded-full font-bold shadow-lg flex-1 min-w-[200px]">🏆 Start Tournament</button>
         </div>
         <button onclick="goHome()" class="mt-6 text-slate-400 underline font-bold">Back to Home</button>
     </div>
@@ -198,8 +300,8 @@
     <div id="game-view" class="hidden-view h-screen w-screen relative bg-green text-white">
         <!-- Court Markings -->
         <div class="absolute inset-0 pointer-events-none z-0">
-            <div class="absolute inset-4 sm:inset-6 border-4 border-white/60 rounded-xl"></div>
-            <div class="absolute left-1/2 top-0 bottom-0 w-1 bg-white/60 -translate-x-1/2"></div>
+            <div class="absolute inset-y-12 inset-x-4 md:inset-6 border-4 border-white/60 rounded-xl"></div>
+            <div class="absolute left-1/2 top-12 bottom-12 md:top-6 md:bottom-6 w-1 bg-white/60 -translate-x-1/2"></div>
             <div class="absolute left-1/2 top-1/2 w-32 h-32 md:w-48 md:h-48 border-4 border-white/60 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
             <div class="absolute left-1/2 top-1/2 w-4 h-4 bg-white/60 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
         </div>
@@ -208,7 +310,7 @@
         <div id="confetti-container" class="absolute inset-0 pointer-events-none z-40 overflow-hidden"></div>
 
         <!-- Top HUD -->
-        <div class="absolute top-0 w-full z-20 flex justify-between items-start px-6 pt-6 pointer-events-none">
+        <div class="absolute top-1/2 -translate-y-1/2 md:top-0 md:translate-y-0 w-full z-20 flex justify-between items-center md:items-start px-2 md:px-6 pt-0 md:pt-6 pointer-events-none">
             <!-- P1 Stats -->
             <div class="flex flex-col items-start gap-1">
                 <div class="bg-black/60 px-4 py-2 rounded-lg border border-white/20 backdrop-blur-sm pointer-events-auto">
@@ -240,12 +342,14 @@
         </div>
 
         <!-- Main Play Area -->
-        <div class="relative w-full h-full flex z-10">
+        <div class="relative w-full h-full flex flex-col-reverse md:flex-row z-10">
             <!-- P1 Zone -->
-            <div class="flex-1 flex flex-col justify-end items-center pb-16 md:pb-24 px-4 relative" id="p1-zone">
-                <div id="p1-ready-msg" class="hidden text-3xl font-bold text-blue-300 bg-black/60 px-6 py-3 rounded-xl border border-blue-500/50 backdrop-blur-md shadow-lg animate-pulse mb-8">READY ✓</div>
-                <div id="p1-cpu-msg" class="hidden text-xl font-bold text-slate-300 mb-8 animate-bounce">CPU Thinking...</div>
-                <div id="p1-choices" class="flex gap-4 mb-8">
+            <div class="flex-1 flex flex-col justify-end items-center pb-8 md:pb-24 px-4 relative border-t-4 border-dashed border-white/30 md:border-t-0 md:border-r-4" id="p1-zone">
+                <div class="absolute bottom-32 md:bottom-32 text-blue-300/50 font-black text-2xl tracking-widest uppercase pointer-events-none">Player 1 Side</div>
+                <div class="text-blue-200/70 text-sm font-bold mb-2 pointer-events-none">P1 Controls: Touch or A/S/D</div>
+                <div id="p1-ready-msg" class="hidden text-3xl font-bold text-blue-300 bg-black/60 px-6 py-3 rounded-xl border border-blue-500/50 backdrop-blur-md shadow-lg animate-pulse mb-4 md:mb-8 pointer-events-none">READY ✓</div>
+                <div id="p1-cpu-msg" class="hidden text-xl font-bold text-slate-300 mb-4 md:mb-8 animate-bounce pointer-events-none">CPU Thinking...</div>
+                <div id="p1-choices" class="flex gap-4 mb-4 md:mb-8">
                     <button onclick="handleChoice(1, '✊')" class="bg-slate-800/90 hover:bg-blue-900 border-4 border-slate-600 rounded-full w-20 h-20 md:w-24 md:h-24 text-4xl shadow-xl transition-all active:scale-90 flex items-center justify-center backdrop-blur-sm">✊</button>
                     <button onclick="handleChoice(1, '✋')" class="bg-slate-800/90 hover:bg-blue-900 border-4 border-slate-600 rounded-full w-20 h-20 md:w-24 md:h-24 text-4xl shadow-xl transition-all active:scale-90 flex items-center justify-center backdrop-blur-sm">✋</button>
                     <button onclick="handleChoice(1, '✌️')" class="bg-slate-800/90 hover:bg-blue-900 border-4 border-slate-600 rounded-full w-20 h-20 md:w-24 md:h-24 text-4xl shadow-xl transition-all active:scale-90 flex items-center justify-center backdrop-blur-sm">✌️</button>
@@ -253,10 +357,12 @@
             </div>
 
             <!-- P2 Zone -->
-            <div class="flex-1 flex flex-col justify-end items-center pb-16 md:pb-24 px-4 relative" id="p2-zone">
-                <div id="p2-ready-msg" class="hidden text-3xl font-bold text-red-300 bg-black/60 px-6 py-3 rounded-xl border border-red-500/50 backdrop-blur-md shadow-lg animate-pulse mb-8">READY ✓</div>
-                <div id="p2-cpu-msg" class="hidden text-xl font-bold text-slate-300 mb-8 animate-bounce">CPU Thinking...</div>
-                <div id="p2-choices" class="flex gap-4 mb-8">
+            <div class="flex-1 flex flex-col justify-end items-center pb-8 md:pb-24 px-4 relative rotate-180 md:rotate-0" id="p2-zone">
+                <div class="absolute bottom-32 md:bottom-32 text-red-300/50 font-black text-2xl tracking-widest uppercase pointer-events-none">Player 2 Side</div>
+                <div class="text-red-200/70 text-sm font-bold mb-2 pointer-events-none">P2 Controls: Touch or J/K/L</div>
+                <div id="p2-ready-msg" class="hidden text-3xl font-bold text-red-300 bg-black/60 px-6 py-3 rounded-xl border border-red-500/50 backdrop-blur-md shadow-lg animate-pulse mb-4 md:mb-8 pointer-events-none">READY ✓</div>
+                <div id="p2-cpu-msg" class="hidden text-xl font-bold text-slate-300 mb-4 md:mb-8 animate-bounce pointer-events-none">CPU Thinking...</div>
+                <div id="p2-choices" class="flex gap-4 mb-4 md:mb-8">
                     <button onclick="handleChoice(2, '✊')" class="bg-slate-800/90 hover:bg-red-900 border-4 border-slate-600 rounded-full w-20 h-20 md:w-24 md:h-24 text-4xl shadow-xl transition-all active:scale-90 flex items-center justify-center backdrop-blur-sm">✊</button>
                     <button onclick="handleChoice(2, '✋')" class="bg-slate-800/90 hover:bg-red-900 border-4 border-slate-600 rounded-full w-20 h-20 md:w-24 md:h-24 text-4xl shadow-xl transition-all active:scale-90 flex items-center justify-center backdrop-blur-sm">✋</button>
                     <button onclick="handleChoice(2, '✌️')" class="bg-slate-800/90 hover:bg-red-900 border-4 border-slate-600 rounded-full w-20 h-20 md:w-24 md:h-24 text-4xl shadow-xl transition-all active:scale-90 flex items-center justify-center backdrop-blur-sm">✌️</button>
@@ -296,6 +402,14 @@
 
     <!-- Application Logic -->
     <script>
+        // --- Firebase Init ---
+        const firebaseConfig = {
+            databaseURL: "https://rps-elite-default-rtdb.firebaseio.com",
+            projectId: "rps-elite",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
         // --- Core State ---
         const winRules = { '✊': '✌️', '✋': '✊', '✌️': '✋' };
         
@@ -325,8 +439,11 @@
 
         // --- View Routing ---
         function hideAllViews() {
-            ['boot-view', 'home-view', 'admin-view', 'tourney-setup-view', 'bracket-view', 'game-view']
-                .forEach(id => document.getElementById(id).classList.add('hidden-view'));
+            ['boot-view', 'home-view', 'admin-view', 'tourney-setup-view', 'bracket-view', 'game-view', 'local-battle-modal', 'leaderboard-view', 'online-lobby-view']
+                .forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.add('hidden-view');
+                });
         }
 
         function bootApp() {
@@ -348,10 +465,81 @@
             updateAdminUI();
         }
 
+        function openLocalBattleModal() {
+            document.getElementById('local-battle-modal').classList.remove('hidden-view');
+            setModalP1('Human'); setModalP2('Human');
+        }
+        
+        function closeLocalBattleModal() {
+            document.getElementById('local-battle-modal').classList.add('hidden-view');
+        }
+
+        function goToOnlineLobby() {
+            if (tourney && tourney.active) {
+                if (confirm("You have an active local tournament. Do you want to resume it? (Click Cancel to start a new one)")) {
+                    goToBracket();
+                    return;
+                } else {
+                    tourney.active = false;
+                }
+            }
+            hideAllViews();
+            document.getElementById('online-lobby-view').classList.remove('hidden-view');
+            document.getElementById('lobby-setup').classList.remove('hidden');
+            document.getElementById('lobby-waiting').classList.add('hidden');
+        }
+
+        function goToLeaderboard() {
+            hideAllViews();
+            document.getElementById('leaderboard-view').classList.remove('hidden-view');
+            loadLeaderboard();
+        }
+
         function goToTourneySetup() {
+            if (tourney && tourney.active) {
+                if (confirm("You have an active local tournament. Do you want to resume it? (Click Cancel to start a new one)")) {
+                    goToBracket();
+                    return;
+                } else {
+                    tourney.active = false;
+                }
+            }
             hideAllViews();
             document.getElementById('tourney-setup-view').classList.remove('hidden-view');
             renderTourneySetup();
+        }
+
+        function openInfoModal() {
+            document.getElementById('info-modal').classList.remove('hidden-view');
+        }
+
+        function closeInfoModal() {
+            document.getElementById('info-modal').classList.add('hidden-view');
+        }
+
+        function toggleEasterEgg() {
+            const egg = document.getElementById('easter-egg-img');
+            egg.classList.toggle('hidden');
+        }
+
+        function setModalP1(type) {
+            settings.p1Type = type;
+            document.getElementById('modal-p1-human').className = type === 'Human' ? 'flex-1 py-2 rounded bg-blue-600 text-white font-bold' : 'flex-1 py-2 rounded text-slate-400 font-bold';
+            document.getElementById('modal-p1-cpu').className = type === 'CPU' ? 'flex-1 py-2 rounded bg-blue-600 text-white font-bold' : 'flex-1 py-2 rounded text-slate-400 font-bold';
+        }
+
+        function setModalP2(type) {
+            settings.p2Type = type;
+            document.getElementById('modal-p2-human').className = type === 'Human' ? 'flex-1 py-2 rounded bg-red-600 text-white font-bold' : 'flex-1 py-2 rounded text-slate-400 font-bold';
+            document.getElementById('modal-p2-cpu').className = type === 'CPU' ? 'flex-1 py-2 rounded bg-red-600 text-white font-bold' : 'flex-1 py-2 rounded text-slate-400 font-bold';
+        }
+
+        function startLocalBattle() {
+            settings.p1Name = document.getElementById('modal-p1-name').value || 'Player 1';
+            settings.p2Name = document.getElementById('modal-p2-name').value || 'Player 2';
+            settings.mode = 'single';
+            closeLocalBattleModal();
+            goToGame();
         }
 
         function goToBracket(fromGame = false) {
@@ -424,15 +612,19 @@
             stopAllMusic();
             if (settings.isMuted) return;
             let step = 0;
-            // Epic 8-bit Arpeggio
-            const notes = [
-                523.25, 659.25, 783.99, 1046.50, 1046.50, 783.99, 659.25, 523.25,
-                587.33, 698.46, 880.00, 1174.66, 1174.66, 880.00, 698.46, 587.33
-            ];
+            // Energetic Heavy Bass Line
+            const bassNotes = [65.41, 65.41, 65.41, 77.78, 65.41, 65.41, 98.00, 77.78]; // C2, Eb2, G2
+            const synthNotes = [261.63, 311.13, 392.00, 311.13, 261.63, 392.00, 466.16, 392.00]; // C4, Eb4, G4, Bb4
+            
             bgMusicInterval = setInterval(() => {
-                playTone(notes[step % notes.length], 'square', 0.1, 0.03);
+                // Play heavy bass
+                playTone(bassNotes[step % bassNotes.length], 'sawtooth', 0.15, 0.15);
+                // Play rhythmic synth
+                if (step % 2 === 0) {
+                    playTone(synthNotes[(step/2) % synthNotes.length], 'square', 0.1, 0.05);
+                }
                 step++;
-            }, 120);
+            }, 100); // Faster tempo
         }
 
         function startWaitingMusic() {
@@ -467,8 +659,8 @@
             try {
                 osc = audioCtx.createOscillator();
                 gain = audioCtx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(45, audioCtx.currentTime);
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(65.41, audioCtx.currentTime); // Deep bass
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 gain.gain.setValueAtTime(0, audioCtx.currentTime);
@@ -478,15 +670,26 @@
                 pulseInterval = setInterval(() => {
                     if (settings.isMuted || !gain) return;
                     const t = audioCtx.currentTime;
+                    // Intense driving drum beat pattern
                     if (beat % 4 === 0) {
-                        gain.gain.setTargetAtTime(0.6, t, 0.05);
-                        gain.gain.setTargetAtTime(0, t + 0.1, 0.1);
+                        osc.frequency.setValueAtTime(82.41, t); // E2
+                        gain.gain.setTargetAtTime(0.8, t, 0.02);
+                        gain.gain.setTargetAtTime(0, t + 0.05, 0.1);
                     } else if (beat % 4 === 1) {
-                        gain.gain.setTargetAtTime(1.0, t, 0.05);
-                        gain.gain.setTargetAtTime(0, t + 0.15, 0.2);
+                        osc.frequency.setValueAtTime(65.41, t); // C2
+                        gain.gain.setTargetAtTime(0.5, t, 0.02);
+                        gain.gain.setTargetAtTime(0, t + 0.05, 0.1);
+                    } else if (beat % 4 === 2) {
+                        osc.frequency.setValueAtTime(98.00, t); // G2
+                        gain.gain.setTargetAtTime(0.9, t, 0.02);
+                        gain.gain.setTargetAtTime(0, t + 0.08, 0.15);
+                    } else if (beat % 4 === 3) {
+                        osc.frequency.setValueAtTime(65.41, t); // C2
+                        gain.gain.setTargetAtTime(0.5, t, 0.02);
+                        gain.gain.setTargetAtTime(0, t + 0.05, 0.1);
                     }
                     beat++;
-                }, 250);
+                }, 150); // Fast rhythm
             } catch(e){}
         }
 
@@ -539,14 +742,6 @@
 
         // --- Admin & Setup Logic ---
         function updateAdminUI() {
-            document.getElementById('p1-name-input').value = settings.p1Name;
-            document.getElementById('p2-name-input').value = settings.p2Name;
-            
-            document.getElementById('p1-type-human').className = `flex-1 py-1 rounded flex items-center justify-center transition-colors text-sm ${settings.p1Type === 'Human' ? 'bg-blue-600 text-white' : 'text-slate-400'}`;
-            document.getElementById('p1-type-cpu').className = `flex-1 py-1 rounded flex items-center justify-center transition-colors text-sm ${settings.p1Type === 'CPU' ? 'bg-blue-600 text-white' : 'text-slate-400'}`;
-            document.getElementById('p2-type-human').className = `flex-1 py-1 rounded flex items-center justify-center transition-colors text-sm ${settings.p2Type === 'Human' ? 'bg-red-600 text-white' : 'text-slate-400'}`;
-            document.getElementById('p2-type-cpu').className = `flex-1 py-1 rounded flex items-center justify-center transition-colors text-sm ${settings.p2Type === 'CPU' ? 'bg-red-600 text-white' : 'text-slate-400'}`;
-
             [1, 3, 5].forEach(num => {
                 document.getElementById(`bestof-${num}`).className = `flex-1 py-2 rounded font-bold text-sm transition-colors ${settings.bestOf === num ? 'bg-yellow-600 text-white border-yellow-400' : 'bg-slate-700 text-slate-300 border-slate-600'}`;
             });
@@ -566,12 +761,9 @@
             });
         }
 
-        function setPlayerType(p, type) { if (p === 1) settings.p1Type = type; else settings.p2Type = type; updateAdminUI(); }
         function setBestOf(val) { settings.bestOf = val; updateAdminUI(); }
         
         function saveAdminSettings() {
-            settings.p1Name = document.getElementById('p1-name-input').value || 'Player 1';
-            settings.p2Name = document.getElementById('p2-name-input').value || 'Player 2';
             saveData();
             goHome();
         }
@@ -842,6 +1034,8 @@
                 game.stage = 'gameOver';
                 document.getElementById('result-msg').innerText = p1Won ? `${settings.p1Name} WINS! 🎉` : `${settings.p2Name} WINS! 🎉`;
                 fireConfetti(p1Won ? 'p1' : 'p2', true);
+                
+                updatePlayerWin(p1Won ? settings.p1Name : settings.p2Name);
 
                 const againBtn = document.getElementById('play-again-btn');
                 if (settings.mode === 'tournament') {
@@ -875,6 +1069,238 @@
             updateGameUI();
             triggerCPU();
         }
+
+        // --- Keyboard Controls ---
+        window.addEventListener('keydown', (e) => {
+            if (document.getElementById('game-view').classList.contains('hidden-view')) return;
+            if (game.stage !== 'selecting') return;
+            const key = e.key.toLowerCase();
+            if (settings.p1Type === 'Human' && !game.p1Choice) {
+                if (key === 'a') handleChoice(1, '✊');
+                if (key === 's') handleChoice(1, '✋');
+                if (key === 'd') handleChoice(1, '✌️');
+            }
+            if (settings.p2Type === 'Human' && !game.p2Choice) {
+                if (key === 'j') handleChoice(2, '✊');
+                if (key === 'k') handleChoice(2, '✋');
+                if (key === 'l') handleChoice(2, '✌️');
+            }
+        });
+
+        // --- Leaderboard & Stats ---
+        function updatePlayerWin(name) {
+            if (!name || name.startsWith('CPU')) return;
+            // Local fallback
+            let stats = JSON.parse(localStorage.getItem('rpsEliteStats') || '{}');
+            stats[name] = (stats[name] || 0) + 1;
+            localStorage.setItem('rpsEliteStats', JSON.stringify(stats));
+
+            // Global update (Firebase)
+            if (database) {
+                const ref = database.ref('leaderboard/' + name);
+                ref.transaction((currentWins) => {
+                    return (currentWins || 0) + 1;
+                }).catch(e => console.log('Firebase error:', e));
+            }
+        }
+
+        function loadLeaderboard() {
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = '<div class="text-center text-slate-500 py-8 animate-pulse">Loading Global Leaderboard...</div>';
+            
+            if (database) {
+                database.ref('leaderboard').orderByValue().limitToLast(10).once('value', (snapshot) => {
+                    let players = [];
+                    snapshot.forEach((child) => {
+                        players.push({ name: child.key, wins: child.val() });
+                    });
+                    players.reverse(); // Highest first
+                    renderLeaderboardItems(players);
+                }, (error) => {
+                    console.log('Firebase error:', error);
+                    loadLocalLeaderboard();
+                });
+            } else {
+                loadLocalLeaderboard();
+            }
+        }
+
+        function loadLocalLeaderboard() {
+            let stats = JSON.parse(localStorage.getItem('rpsEliteStats') || '{}');
+            let players = Object.keys(stats).map(k => ({ name: k, wins: stats[k] }));
+            players.sort((a,b) => b.wins - a.wins);
+            renderLeaderboardItems(players.slice(0, 10));
+        }
+
+        function renderLeaderboardItems(players) {
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = '';
+            if (players.length === 0) {
+                list.innerHTML = '<div class="text-center text-slate-500 py-8">No records found. Play some matches!</div>';
+                return;
+            }
+            players.forEach((p, idx) => {
+                let badge = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : (idx === 2 ? '🥉' : ''));
+                list.innerHTML += `
+                    <div class="flex items-center text-white bg-slate-900/50 p-3 rounded border border-slate-700/50 mb-2 shadow">
+                        <div class="w-12 text-center font-black text-slate-500">${idx + 1}</div>
+                        <div class="flex-1 font-bold text-lg">${badge} ${p.name}</div>
+                        <div class="w-20 text-right font-mono text-yellow-400 text-lg">${p.wins}</div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- Online Lobby ---
+        let onlineRoomCode = null;
+        let onlineRole = null; // 'host' or 'guest'
+        let onlineRef = null;
+
+        function generateRoomCode() {
+            return Math.floor(1000 + Math.random() * 9000).toString();
+        }
+
+        function createOnlineRoom() {
+            if (!database) return alert("Online mode is currently unavailable.");
+            onlineRoomCode = generateRoomCode();
+            onlineRole = 'host';
+            document.getElementById('lobby-setup').classList.add('hidden');
+            document.getElementById('lobby-waiting').classList.remove('hidden');
+            document.getElementById('lobby-room-code-display').innerText = onlineRoomCode;
+
+            onlineRef = database.ref('rooms/' + onlineRoomCode);
+            onlineRef.set({
+                hostReady: true,
+                guestReady: false,
+                p1Choice: null,
+                p2Choice: null,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            // Listen for guest
+            onlineRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data) return; // Room closed
+                if (data.guestReady && data.hostReady) {
+                    startOnlineMatch();
+                }
+            });
+        }
+
+        function joinOnlineRoom() {
+            if (!database) return alert("Online mode is currently unavailable.");
+            const code = document.getElementById('join-room-code').value.trim();
+            if (code.length !== 4) return alert("Invalid room code");
+            
+            onlineRef = database.ref('rooms/' + code);
+            onlineRef.once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    onlineRoomCode = code;
+                    onlineRole = 'guest';
+                    onlineRef.update({ guestReady: true });
+                    startOnlineMatch();
+                } else {
+                    alert("Room not found");
+                }
+            });
+        }
+
+        function cancelOnlineRoom() {
+            if (onlineRole === 'host' && onlineRef) {
+                onlineRef.remove();
+            }
+            onlineRef = null;
+            goToOnlineLobby();
+        }
+
+        function startOnlineMatch() {
+            // Remove listeners for setup, add listeners for game state
+            if (onlineRef) onlineRef.off();
+            
+            settings.mode = 'online';
+            settings.p1Name = 'Host (You)';
+            settings.p2Name = 'Guest';
+            if (onlineRole === 'guest') {
+                settings.p1Name = 'Host';
+                settings.p2Name = 'Guest (You)';
+            }
+            settings.p1Type = 'Human';
+            settings.p2Type = 'Human';
+            
+            goToGame();
+
+            // Listen to room state
+            onlineRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data) {
+                    alert("The other player has left the match.");
+                    goHome();
+                    return;
+                }
+
+                // Update choices if the opponent made one
+                if (onlineRole === 'host' && data.p2Choice && data.p2Choice !== game.p2Choice) {
+                    game.p2Choice = data.p2Choice;
+                    updateGameUI();
+                } else if (onlineRole === 'guest' && data.p1Choice && data.p1Choice !== game.p1Choice) {
+                    game.p1Choice = data.p1Choice;
+                    updateGameUI();
+                }
+
+                if (game.p1Choice && game.p2Choice && game.stage === 'selecting') {
+                    startBattle();
+                }
+            });
+        }
+
+        // Override handleChoice for online mode
+        const originalHandleChoice = handleChoice;
+        handleChoice = function(p, choice) {
+            if (settings.mode === 'online') {
+                // Ensure players can only pick their own side
+                if (onlineRole === 'host' && p === 2) return;
+                if (onlineRole === 'guest' && p === 1) return;
+                
+                originalHandleChoice(p, choice);
+                if (onlineRef) {
+                    if (onlineRole === 'host') onlineRef.update({ p1Choice: choice });
+                    else onlineRef.update({ p2Choice: choice });
+                }
+            } else {
+                originalHandleChoice(p, choice);
+            }
+        };
+
+        const originalNextRound = nextRound;
+        nextRound = function() {
+            if (settings.mode === 'online') {
+                game.p1Choice = null; game.p2Choice = null; game.stage = 'selecting';
+                document.getElementById('confetti-container').innerHTML = '';
+                startWaitingMusic();
+                updateGameUI();
+                if (onlineRef) {
+                    if (onlineRole === 'host') onlineRef.update({ p1Choice: null });
+                    else onlineRef.update({ p2Choice: null });
+                }
+            } else {
+                originalNextRound();
+            }
+        };
+
+        const originalResetGame = resetGame;
+        resetGame = function() {
+            if (settings.mode === 'online') {
+                if (onlineRef) {
+                    if (onlineRole === 'host') onlineRef.update({ p1Choice: null, p2Choice: null }); // Host resets both
+                }
+                game = { p1Score: 0, p2Score: 0, p1Choice: null, p2Choice: null, stage: 'selecting' };
+                document.getElementById('confetti-container').innerHTML = '';
+                startWaitingMusic();
+                updateGameUI();
+            } else {
+                originalResetGame();
+            }
+        };
     </script>
 </body>
 </html>

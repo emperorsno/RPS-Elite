@@ -1,0 +1,7 @@
+- in landscape mode, I can't scroll the home screen to see all the buttons. Could you please make it possible to scroll so i can choose any of the options?
+- in the game, when there is a human player, the label for the player controls overlaps the player name. The icons seem to be causing this because cpu players that don't show the icons don't have this issue.
+- in portrait mode, the screen is still too tall, could it be reduced by 10% please?
+- for the home page, could we use the same splash screen as the boot screen please but make it duller so that it doesn't dominate the screen? the buttons need to be clearly visible over the image, maybe a semi transparent black box behind the buttons would help? Also, perhaps make it greyscale as well? 
+- with the image on the home screen you can now remove the "RPS ELITE" title from the screen as it's not needed if the image is there
+- when a game ends and the player returns to the home screen, change the music back to the home page music, currently it continues with the game music
+- change the pop-up message when there is an active tournament. the user is prompted to "cancel" or "OK" but the options should be "New" and "Resume"
