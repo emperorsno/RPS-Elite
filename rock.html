@@ -80,16 +80,16 @@
     </div>
 
     <!-- ================= HOME VIEW ================= -->
-    <div id="home-view" class="hidden-view min-h-screen w-screen flex flex-col items-center pt-24 pb-8 bg-slate-900 relative overflow-y-auto">
-        <div class="absolute top-4 right-4 flex gap-4">
-            <button onclick="toggleMute()" class="bg-slate-800 p-3 rounded-full border border-slate-600 text-xl" id="home-mute-btn">🔊</button>
-            <button onclick="openInfoModal()" class="bg-slate-800 p-3 rounded-full border border-slate-600 text-xl">ℹ️</button>
-            <button onclick="goToAdmin()" class="bg-slate-800 p-3 rounded-full border border-slate-600 text-xl">⚙️</button>
+    <div id="home-view" class="hidden-view h-[100dvh] w-screen flex flex-col items-center pt-20 pb-8 bg-black relative overflow-y-auto bg-cover bg-center" style="background-image: url('splash.jpg')">
+        <div class="absolute inset-0 bg-black/60 backdrop-grayscale z-0 pointer-events-none"></div>
+
+        <div class="absolute top-4 right-4 flex gap-4 z-10">
+            <button onclick="toggleMute()" class="bg-slate-800 p-3 rounded-full border border-slate-600 text-xl shadow-lg" id="home-mute-btn">🔊</button>
+            <button onclick="openInfoModal()" class="bg-slate-800 p-3 rounded-full border border-slate-600 text-xl shadow-lg">ℹ️</button>
+            <button onclick="goToAdmin()" class="bg-slate-800 p-3 rounded-full border border-slate-600 text-xl shadow-lg">⚙️</button>
         </div>
 
-        <h1 class="text-6xl md:text-8xl font-black mb-12 neon-title mt-8 md:mt-0">RPS ELITE</h1>
-        
-        <div class="flex flex-col gap-6 w-full max-w-sm px-4 mb-12">
+        <div class="flex flex-col gap-6 w-full max-w-sm px-4 mt-auto mb-auto z-10 bg-black/60 p-6 rounded-3xl border border-white/10 backdrop-blur-sm shadow-2xl">
             <button onclick="openLocalBattleModal()" class="w-full bg-gradient-to-r from-blue-600 to-blue-400 text-white font-bold text-2xl py-4 rounded-full border-2 border-white/50 shadow-lg transition-transform active:scale-95 hover:scale-105">
                 ⚔️ Local Battle
             </button>
@@ -103,7 +103,19 @@
                 👑 Global Leaderboard
             </button>
         </div>
-        <p class="mt-auto text-slate-500 font-mono text-xs text-center w-full px-4">by Matthew Whitemore - V1.00.202604062045</p>
+        <p class="z-10 mt-auto text-white/50 font-mono text-xs text-center w-full px-4 font-bold tracking-widest">by Matthew Whitemore - V1.01.2026</p>
+    </div>
+
+    <!-- ================= TOURNAMENT RESUME MODAL ================= -->
+    <div id="tourney-resume-modal" class="hidden-view absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="bg-slate-800 rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden border border-slate-700 text-center p-6 space-y-6">
+            <h1 class="text-2xl font-bold text-yellow-400">Active Tournament</h1>
+            <p class="text-white text-lg">You have an active local tournament in progress.</p>
+            <div class="flex gap-4">
+                <button onclick="tourneyNew()" class="flex-1 bg-red-600 hover:bg-red-500 text-white py-3 rounded-xl font-bold shadow-lg transition-transform active:scale-95">New</button>
+                <button onclick="tourneyResume()" class="flex-1 bg-green-600 hover:bg-green-500 text-white py-3 rounded-xl font-bold shadow-lg transition-transform active:scale-95">Resume</button>
+            </div>
+        </div>
     </div>
 
     <!-- ================= INFO MODAL ================= -->
@@ -297,7 +309,7 @@
 
 
     <!-- ================= GAME VIEW ================= -->
-    <div id="game-view" class="hidden-view h-screen w-screen relative bg-green text-white">
+    <div id="game-view" class="hidden-view h-[90dvh] md:h-[100dvh] w-screen relative bg-green text-white">
         <!-- Court Markings -->
         <div class="absolute inset-0 pointer-events-none z-0">
             <div class="absolute inset-y-12 inset-x-4 md:inset-6 border-4 border-white/60 rounded-xl"></div>
@@ -345,8 +357,8 @@
         <div class="relative w-full h-full flex flex-col-reverse md:flex-row z-10">
             <!-- P1 Zone -->
             <div class="flex-1 flex flex-col justify-end items-center pb-8 md:pb-24 px-4 relative border-t-4 border-dashed border-white/30 md:border-t-0 md:border-r-4" id="p1-zone">
-                <div class="absolute bottom-32 md:bottom-32 text-blue-300/50 font-black text-2xl tracking-widest uppercase pointer-events-none">Player 1 Side</div>
-                <div class="text-blue-200/70 text-sm font-bold mb-2 pointer-events-none">P1 Controls: Touch or A/S/D</div>
+                <div class="hidden md:block absolute bottom-32 md:bottom-32 text-blue-300/50 font-black text-2xl tracking-widest uppercase pointer-events-none">Player 1 Side</div>
+                <div id="p1-controls-label" class="hidden md:block text-blue-200/70 text-sm font-bold mb-2 pointer-events-none">P1 Controls: Touch or A/S/D</div>
                 <div id="p1-ready-msg" class="hidden text-3xl font-bold text-blue-300 bg-black/60 px-6 py-3 rounded-xl border border-blue-500/50 backdrop-blur-md shadow-lg animate-pulse mb-4 md:mb-8 pointer-events-none">READY ✓</div>
                 <div id="p1-cpu-msg" class="hidden text-xl font-bold text-slate-300 mb-4 md:mb-8 animate-bounce pointer-events-none">CPU Thinking...</div>
                 <div id="p1-choices" class="flex gap-4 mb-4 md:mb-8">
@@ -358,8 +370,8 @@
 
             <!-- P2 Zone -->
             <div class="flex-1 flex flex-col justify-end items-center pb-8 md:pb-24 px-4 relative rotate-180 md:rotate-0" id="p2-zone">
-                <div class="absolute bottom-32 md:bottom-32 text-red-300/50 font-black text-2xl tracking-widest uppercase pointer-events-none">Player 2 Side</div>
-                <div class="text-red-200/70 text-sm font-bold mb-2 pointer-events-none">P2 Controls: Touch or J/K/L</div>
+                <div class="hidden md:block absolute bottom-32 md:bottom-32 text-red-300/50 font-black text-2xl tracking-widest uppercase pointer-events-none">Player 2 Side</div>
+                <div id="p2-controls-label" class="hidden md:block text-red-200/70 text-sm font-bold mb-2 pointer-events-none">P2 Controls: Touch or J/K/L</div>
                 <div id="p2-ready-msg" class="hidden text-3xl font-bold text-red-300 bg-black/60 px-6 py-3 rounded-xl border border-red-500/50 backdrop-blur-md shadow-lg animate-pulse mb-4 md:mb-8 pointer-events-none">READY ✓</div>
                 <div id="p2-cpu-msg" class="hidden text-xl font-bold text-slate-300 mb-4 md:mb-8 animate-bounce pointer-events-none">CPU Thinking...</div>
                 <div id="p2-choices" class="flex gap-4 mb-4 md:mb-8">
@@ -454,10 +466,20 @@
 
         function goHome() {
             hideAllViews();
+            stopHeartbeat();
             document.getElementById('home-view').classList.remove('hidden-view');
-            document.getElementById('home-bracket-btn').classList.toggle('hidden', !tourney.active);
+            document.getElementById('home-bracket-btn')?.classList.toggle('hidden', !tourney.active);
             startOpeningMusic();
         }
+
+        function hideAllViews() {
+            ['boot-view', 'home-view', 'admin-view', 'tourney-setup-view', 'bracket-view', 'game-view', 'local-battle-modal', 'leaderboard-view', 'online-lobby-view', 'info-modal', 'tourney-resume-modal'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden-view');
+            });
+        }
+
+        let pendingTourneyAction = null;
 
         function goToAdmin() {
             hideAllViews();
@@ -476,13 +498,14 @@
 
         function goToOnlineLobby() {
             if (tourney && tourney.active) {
-                if (confirm("You have an active local tournament. Do you want to resume it? (Click Cancel to start a new one)")) {
-                    goToBracket();
-                    return;
-                } else {
-                    tourney.active = false;
-                }
+                pendingTourneyAction = 'online';
+                document.getElementById('tourney-resume-modal').classList.remove('hidden-view');
+                return;
             }
+            proceedToOnlineLobby();
+        }
+
+        function proceedToOnlineLobby() {
             hideAllViews();
             document.getElementById('online-lobby-view').classList.remove('hidden-view');
             document.getElementById('lobby-setup').classList.remove('hidden');
@@ -497,16 +520,29 @@
 
         function goToTourneySetup() {
             if (tourney && tourney.active) {
-                if (confirm("You have an active local tournament. Do you want to resume it? (Click Cancel to start a new one)")) {
-                    goToBracket();
-                    return;
-                } else {
-                    tourney.active = false;
-                }
+                pendingTourneyAction = 'setup';
+                document.getElementById('tourney-resume-modal').classList.remove('hidden-view');
+                return;
             }
+            proceedToTourneySetup();
+        }
+
+        function proceedToTourneySetup() {
             hideAllViews();
             document.getElementById('tourney-setup-view').classList.remove('hidden-view');
             renderTourneySetup();
+        }
+
+        function tourneyResume() {
+            document.getElementById('tourney-resume-modal').classList.add('hidden-view');
+            goToBracket();
+        }
+
+        function tourneyNew() {
+            document.getElementById('tourney-resume-modal').classList.add('hidden-view');
+            tourney.active = false;
+            if (pendingTourneyAction === 'setup') proceedToTourneySetup();
+            else proceedToOnlineLobby();
         }
 
         function openInfoModal() {
