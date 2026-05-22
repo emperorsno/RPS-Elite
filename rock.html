@@ -416,7 +416,7 @@
     <script>
         // --- Firebase Init ---
         const firebaseConfig = {
-            databaseURL: "https://rps-elite-default-rtdb.firebaseio.com",
+            databaseURL: "https://rps-elite-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "rps-elite",
         };
         firebase.initializeApp(firebaseConfig);
@@ -1211,6 +1211,10 @@
                 p1Choice: null,
                 p2Choice: null,
                 timestamp: firebase.database.ServerValue.TIMESTAMP
+            }).catch(error => {
+                alert("Failed to create room. Details: " + error.message);
+                console.error(error);
+                cancelOnlineRoom();
             });
 
             // Listen for guest
@@ -1228,16 +1232,37 @@
             const code = document.getElementById('join-room-code').value.trim();
             if (code.length !== 4) return alert("Invalid room code");
             
+            const joinBtn = document.getElementById('join-room-btn');
+            if (joinBtn) {
+                joinBtn.innerText = "Joining...";
+                joinBtn.disabled = true;
+                joinBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
             onlineRef = database.ref('rooms/' + code);
-            onlineRef.once('value', (snapshot) => {
+            onlineRef.once('value').then((snapshot) => {
+                if (joinBtn) {
+                    joinBtn.innerText = "Join";
+                    joinBtn.disabled = false;
+                    joinBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+                
                 if (snapshot.exists()) {
                     onlineRoomCode = code;
                     onlineRole = 'guest';
-                    onlineRef.update({ guestReady: true });
+                    onlineRef.update({ guestReady: true }).catch(e => console.error(e));
                     startOnlineMatch();
                 } else {
-                    alert("Room not found");
+                    alert("Room not found. Please check the code.");
                 }
+            }).catch(error => {
+                if (joinBtn) {
+                    joinBtn.innerText = "Join";
+                    joinBtn.disabled = false;
+                    joinBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+                alert("Failed to join room. Details: " + error.message);
+                console.error(error);
             });
         }
 
